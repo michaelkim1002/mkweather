@@ -9,10 +9,11 @@ from places import us_cities, COUNTRY_TO_ISO
 import os
 # OpenWeatherMap API key
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 Bootstrap5(app)
+
+
 
 country_choices = [("", "Select a Country")] + [(name, name) for name in COUNTRY_TO_ISO.keys()]
 
@@ -50,6 +51,7 @@ class WeatherQuizForm(FlaskForm):
     submit = SubmitField("Get Results")
 
     def validate(self, extra_validators=None):
+        """Custom form validation with geocoding and cross-field checks."""
         if not super().validate(extra_validators):
             return False
 
@@ -76,83 +78,84 @@ class WeatherQuizForm(FlaskForm):
             )
             return False
 
-        # ---------------- USA CITY ↔ STATE CHECK ----------------
+        # ---------------- CITY VALIDATION ----------------
+        us_city = None
+        resolved_place = None
+
         if country == "United States of America":
+            # ---------------- USA CITY ↔ STATE CHECK ----------------
             valid_cities = us_cities.get(state, [])
-            if city not in valid_cities:
+            if city.lower() not in [c.lower() for c in valid_cities]:
                 self.city.errors.append(
                     f"{city} is not a valid city in {state}. "
                     "If it is, enter the nearest major city."
                 )
                 return False
-
-        # ---------------- GEOCODING ----------------
-        query = city
-        if country == "United States of America":
-            query += f", {state}"
-        query += f", {country}"
-
-        geocode_url = "https://nominatim.openstreetmap.org/search"
-        params = {
-            "q": query,
-            "format": "json",
-            "limit": 5,
-            "addressdetails": 1
-        }
-        headers = {"User-Agent": "weather-app"}
-
-        try:
-            response = requests.get(
-                geocode_url,
-                params=params,
-                headers=headers,
-                timeout=10
-            )
-            response.raise_for_status()
-            geo_data = response.json()
-        except Exception:
-            self.city.errors.append(
-                "Error validating location. Please try again."
-            )
-            return False
-
-        if not geo_data:
-            self.city.errors.append(f"{city} not found in {country}.")
-            return False
-
-        address = geo_data[0].get("address", {})
-        geo_country_code = address.get("country_code", "").lower()
-        geo_country_name = address.get("country", "Unknown")
-        resolved_city = address.get("city") or address.get("town") or city
-        expected_code = COUNTRY_TO_ISO.get(country.strip())
-
-        if country != "United States of America":
+            us_city = city
+        else:
+            # ---------------- NON-USA GEOCODING ----------------
+            expected_code = COUNTRY_TO_ISO.get(country.strip())
             if not expected_code:
-                self.city.errors.append(
-                    "Country validation configuration error."
-                )
+                self.city.errors.append("Country validation configuration error.")
                 return False
 
-            if geo_country_code != expected_code:
-                self.city.errors.append(
-                    f"{city} is not a city in {country}. "
-                )
+            query = city  # only search by city name
+            geocode_url = "https://nominatim.openstreetmap.org/search"
+            params = {"q": query, "format": "json", "limit": 5, "addressdetails": 1}
+            headers = {"User-Agent": "weather-app"}
+
+            try:
+                response = requests.get(geocode_url, params=params, headers=headers, timeout=10)
+                response.raise_for_status()
+                geo_data = response.json()
+            except Exception:
+                self.city.errors.append("Error validating location. Please try again.")
                 return False
+
+            if not geo_data:
+                self.city.errors.append(f"{city} not found in {country}.")
+                return False
+
+            # Filter results to only those matching the expected country
+            valid_results = [
+                result for result in geo_data
+                if result.get("address", {}).get("country_code", "").lower() == expected_code
+            ]
+
+            if not valid_results:
+                self.city.errors.append(f"{city} is not a valid city in {country}.")
+                return False
+
+            # Pick the first valid result
+            resolved_place = valid_results[0]
 
         # ---------------- STORE IN SESSION ----------------
         try:
-            session["lat"] = float(geo_data[0]["lat"])
-            session["lon"] = float(geo_data[0]["lon"])
-            session["city"] = city
-            session["country"] = country
-            session["state"] = state
+            if country == "United States of America":
+                session["city"] = us_city
+                session["country"] = country
+                session["state"] = state
+                # Optional: geocode US city to store lat/lon if needed
+            else:
+                session["lat"] = float(resolved_place["lat"])
+                session["lon"] = float(resolved_place["lon"])
+                address = resolved_place.get("address", {})
+                session["city"] = (
+                        address.get("city") or
+                        address.get("town") or
+                        address.get("village") or
+                        address.get("municipality") or
+                        address.get("state") or
+                        city
+                )
+                session["country"] = country
+                session["state"] = state
         except (KeyError, ValueError):
-            self.city.errors.append(
-                "Error storing location coordinates."
-            )
+            self.city.errors.append("Error storing location coordinates.")
             return False
 
         return True
+
 def get_activity_tips(temp_f, description, user_hot=None, user_cold=None):
     """
     Generate user-specific weather activity tips.
