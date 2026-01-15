@@ -1,0 +1,127 @@
+{% include "header.html" %}
+{% from "bootstrap5/form.html" import render_form %}
+
+<div id="wrapper">
+    <header id="header">
+
+        <!-- Logo -->
+        <div class="logo thundercloud">
+            <span class="fa-stack" style="line-height: 1;">
+                <i class="fas fa-cloud fa-stack-2x"
+                   style="color: transparent;
+                          -webkit-text-stroke-width: 4px;
+                          -webkit-text-stroke-color: white;
+                          transform: translateY(-13px);">
+                </i>
+                <i class="fas fa-bolt fa-stack-1x"
+                   style="transform: translateY(27px) scale(1.1);">
+                </i>
+            </span>
+        </div>
+
+        <div class="content">
+            <div class="inner">
+
+                <h1>MKWEATHER Quiz Results</h1>
+
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                <p>
+                    Results for
+                    {% if weather.state %}
+                        {{ weather.city }}, {{ weather.state }}, {{ weather.country }}
+                    {% else %}
+                        {{ weather.city }}, {{ weather.country }}
+                    {% endif %}
+                </p>
+
+                <h2 class="mb-3">5-Day Forecast</h2>
+
+                <!-- Dark translucent album -->
+                <div class="album-dark p-4">
+
+                    <div class="row row-cols-5 g-3 flex-nowrap">
+
+                        {% for day in weather.forecast %}
+                            <div class="col d-flex">
+                                <div class="card h-100 d-flex flex-column shadow-sm text-center">
+
+                                    <!-- Date -->
+                                    <div class="card-header fw-bold">
+                                        {{ day.date.strftime('%b %d') }}
+                                    </div>
+
+                                    <!-- Weather icon -->
+                                    {% if day.icon %}
+                                        <img
+                                            src="https://openweathermap.org/img/wn/{{ day.icon }}@2x.png"
+                                            class="card-img-top mx-auto"
+                                            alt="{{ day.description }}"
+                                            style="width: 80px;"
+                                        >
+                                    {% endif %}
+
+                                    <!-- Card body -->
+                                    <div class="card-body d-flex flex-column text-center">
+
+                                        <h5 class="card-title mb-1">
+                                            {{ day.temp_f }}°F
+                                        </h5>
+
+                                        <p class="card-text mb-2">
+                                            {{ day.description|title }}
+                                        </p>
+
+                                        <!-- Hot/Cold badge -->
+                                        <div class="badge-slot mb-2">
+                                            {% if user_hot is not none and day.temp_f >= user_hot %}
+                                                <span class="badge bg-danger">Hot</span>
+                                            {% elif user_cold is not none and day.temp_f <= user_cold %}
+                                                <span class="badge bg-primary">Cold</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- What-to-do tips -->
+                                        {% if day.tips %}
+                                            <div class="what-to-do mt-auto">
+                                                <small class="fw-semibold text-uppercase d-block mb-1">
+                                                    What to do
+                                                </small>
+                                                <ul class="list-unstyled small mb-0">
+                                                    {% for tip in day.tips %}
+                                                        <li>• {{ tip }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+
+                                    </div>
+
+                                    <!-- Day name -->
+                                    <div class="card-footer small">
+                                        {{ day.date.strftime('%A') }}
+                                    </div>
+
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+            </ul>
+        </nav>
+
+    </header>
+</div>
+
+{% include "footer.html" %}

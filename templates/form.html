@@ -1,0 +1,61 @@
+<div id="main">
+    <article id="survey">
+        <h2 class="major">Enter Information</h2>
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div class="fields">
+                <!-- Country -->
+                <div class="field half">
+                    {{ form.country.label }}
+                    {{ form.country(class="form-select", autocomplete="off") }}
+                    {% for error in form.country.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                <!-- U.S. State -->
+                <div class="field half">
+                    {{ form.state.label }}
+                    {{ form.state(class="form-select", autocomplete="off") }}
+                    {% for error in form.state.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+                <div class="field half">
+                    {{ form.city.label }}
+                    {{ form.city(class="form-control", autocomplete="new-city") }}
+                    {% for error in form.city.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="fields">
+                <!-- Temperature -->
+                <div class="field half">
+                    {{ form.user_hot.label }}
+                    {{ form.user_hot(class="form-control", type="number", autocomplete="off") }}
+                    {% for error in form.user_hot.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+                <div class="field half">
+                    {{ form.user_cold.label }}
+                    {{ form.user_cold(class="form-control", type="number", autocomplete="off") }}
+                    {% for error in form.user_cold.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <ul class="actions">
+                <li>{{ form.submit(class="primary") }}</li>
+                <li><button type="button" onclick="history.back()">Back</button></li>
+            </ul>
+        </form>
+    </article>
+</div>
+
+{% include "footer.html" %}

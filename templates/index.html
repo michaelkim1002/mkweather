@@ -1,0 +1,36 @@
+{% include "header.html" %}
+{% from "bootstrap5/form.html" import render_form %}
+		<!-- Wrapper -->
+			<div id="wrapper">
+				<!-- Header -->
+					<header id="header">
+						<div class="logo thundercloud">
+                          <span class="fa-stack" style="line-height: 1;">
+                            <!-- Hollow cloud using solid cloud + transparent fill + stroke -->
+                            <i class="fas fa-cloud fa-stack-2x" style="color: transparent;
+                                      -webkit-text-stroke-width: 4px;
+                                      -webkit-text-stroke-color: white;
+                                      transform: translateY(-13px);">
+                            </i>
+                            <!-- Bolt -->
+                            <i class="fas fa-bolt fa-stack-1x"
+                               style="transform: translateY(27px) scale(1.1);">
+                            </i>
+                          </span>
+                        </div>
+						<div class="content">
+							<div class="inner">
+								<h1>Welcome to MKWEATHER!</h1>
+								<p>A Weather Forecast Quiz App.<br/>
+								Click "Take Quiz" to get started</p>
+							</div>
+						</div>
+						<nav>
+							<ul>
+								<li><a href="#survey">Take Quiz</a></li>
+								<!--<li><a href="#elements">Elements</a></li>-->
+							</ul>
+						</nav>
+					</header>
+                <!-- Main -->
+                    {% include "form.html" %}
